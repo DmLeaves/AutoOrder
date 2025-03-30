@@ -1,0 +1,60 @@
+/* 基础样式 */
+:root {
+    /* 主要颜色 */
+    --primary-bg: #0f0f1a;
+    --secondary-bg: #1a1a2e;
+    --tertiary-bg: #212138;
+    --accent-blue: #4da6ff;
+    --accent-cyan: #00e5ff;
+    --accent-purple: #7b5dfa;
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8d4;
+    --text-disabled: #6c6c94;
+
+    /* 状态颜色 */
+    --status-success: #00e676;
+    --status-warning: #ffab00;
+    --status-error: #ff1744;
+
+    /* 边框和阴影 */
+    --border-color: #30304d;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+
+    /* 间距 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* 圆角 */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+
+    /* 过渡效果 */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s ease;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Roboto', 'Microsoft YaHei', sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}

@@ -1,0 +1,30 @@
+# PyCharm project files
+.idea/
+
+# Git metadata
+.git/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# node
+/node_modules/
+
+# custom treeFile
+tree.py
+tree.txt
+

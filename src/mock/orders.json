@@ -1,0 +1,131 @@
+{
+  "orders": [
+    {
+      "id": "Q165",
+      "fee": 500,
+      "startDate": "2025-03-05",
+      "endDate": "2025-03-12",
+      "contact": "蒋萌2",
+      "status": "已完成",
+      "remarks": "今晚给账...",
+      "category": "completed",
+      "month": "2025-1"
+    },
+    {
+      "id": "Q166",
+      "fee": 850,
+      "startDate": "2025-02-10",
+      "endDate": "2025-02-20",
+      "contact": "刘志远",
+      "status": "进行中",
+      "remarks": "待确认细节",
+      "category": "in-progress",
+      "month": "2025-2"
+    },
+    {
+      "id": "Q167",
+      "fee": 1200,
+      "startDate": "2025-03-15",
+      "endDate": "2025-03-30",
+      "contact": "张三",
+      "status": "进行中",
+      "remarks": "需要加急",
+      "category": "in-progress",
+      "month": "2025-3"
+    },
+    {
+      "id": "Q168",
+      "fee": 300,
+      "startDate": "2024-10-01",
+      "endDate": "2024-10-15",
+      "contact": "李四",
+      "status": "已完成",
+      "remarks": "已结算",
+      "category": "completed",
+      "month": "2024-10"
+    },
+    {
+      "id": "Q169",
+      "fee": 750,
+      "startDate": "2024-11-12",
+      "endDate": "2024-11-30",
+      "contact": "王五",
+      "status": "已完成",
+      "remarks": "客户满意",
+      "category": "completed",
+      "month": "2024-11"
+    },
+    {
+      "id": "Q170",
+      "fee": 600,
+      "startDate": "2024-12-05",
+      "endDate": "2024-12-25",
+      "contact": "赵六",
+      "status": "进行中",
+      "remarks": "等待资料",
+      "category": "in-progress",
+      "month": "2024-12"
+    },
+    {
+      "id": "Q171",
+      "fee": 450,
+      "startDate": "2024-10-15",
+      "endDate": "2024-10-25",
+      "contact": "孙七",
+      "status": "异常",
+      "remarks": "客户取消",
+      "category": "abnormal",
+      "month": "2024-10"
+    },
+    {
+      "id": "Q172",
+      "fee": 900,
+      "startDate": "2024-11-20",
+      "endDate": "2024-12-05",
+      "contact": "周八",
+      "status": "异常",
+      "remarks": "需要退款",
+      "category": "abnormal",
+      "month": "2024-11"
+    },
+    {
+      "id": "Q173",
+      "fee": 1500,
+      "startDate": "2024-12-10",
+      "endDate": "2025-01-10",
+      "contact": "吴九",
+      "status": "异常",
+      "remarks": "延期处理",
+      "category": "abnormal",
+      "month": "2024-12"
+    },
+    {
+      "id": "Q174",
+      "fee": 2000,
+      "startDate": "2025-03-01",
+      "endDate": "2025-03-20",
+      "contact": "郑十",
+      "status": "异常",
+      "remarks": "资料缺失",
+      "category": "abnormal",
+      "month": "2025-3"
+    }
+  ],
+  "categories": [
+    {
+      "name": "进行中",
+      "value": "in-progress",
+      "months": ["2024-12", "2025-2", "2025-3"]
+    },
+    {
+      "name": "已完成",
+      "value": "completed",
+      "months": ["2024-10", "2024-11", "2025-1"]
+    },
+    {
+      "name": "异常",
+      "value": "abnormal",
+      "months": ["2024-10", "2024-11", "2024-12", "2025-3"]
+    }
+  ]
+}
