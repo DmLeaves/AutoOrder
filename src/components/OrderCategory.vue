@@ -2,7 +2,17 @@
   <div class="category-container">
     <h3 class="category-title">订单分类菜单</h3>
 
-    <ul class="category-menu">
+    <div v-if="categoriesLoading" class="loading-categories">
+      <div class="mini-spinner"></div>
+      <span>加载分类...</span>
+    </div>
+
+    <div v-else-if="categoriesError" class="error-categories">
+      <p>{{ categoriesError }}</p>
+      <button class="btn btn-sm btn-primary" @click="loadCategories">重试</button>
+    </div>
+
+    <ul v-else class="category-menu">
       <li v-for="category in categories" :key="category.value" class="category-item" :class="{ active: activeCategory === category.value }" @click="toggleCategory(category.value)">
         <div class="category-header">
           <span class="category-icon">
@@ -30,39 +40,62 @@
 </template>
 
 <script>
-import ordersData from '../mock/orders.json';
+import { ref, computed, onMounted } from 'vue';
+import { useOrderStore } from '../store';
+import { storeToRefs } from 'pinia';
 
 export default {
   name: 'OrderCategory',
-  data() {
-    return {
-      categories: ordersData.categories,
-      expandedCategories: [],
-      activeCategory: null,
-      activeSubcategory: null
+  emits: ['category-selected', 'subcategory-selected'],
+  setup(props, { emit }) {
+    const orderStore = useOrderStore();
+    const { categories, categoriesLoading, categoriesError } = storeToRefs(orderStore);
+
+    const expandedCategories = ref([]);
+    const activeCategory = ref(null);
+    const activeSubcategory = ref(null);
+
+    const loadCategories = async () => {
+      await orderStore.fetchCategories();
     };
-  },
-  methods: {
-    toggleCategory(categoryValue) {
-      if (this.expandedCategories.includes(categoryValue)) {
-        this.expandedCategories = this.expandedCategories.filter(cat => cat !== categoryValue);
+
+    const toggleCategory = (categoryValue) => {
+      if (expandedCategories.value.includes(categoryValue)) {
+        expandedCategories.value = expandedCategories.value.filter(cat => cat !== categoryValue);
       } else {
-        this.expandedCategories.push(categoryValue);
+        expandedCategories.value.push(categoryValue);
       }
-      this.activeCategory = categoryValue;
+      activeCategory.value = categoryValue;
 
       // Emit event for parent components
-      this.$emit('category-selected', categoryValue);
-    },
-    selectSubcategory(categoryValue, month) {
-      this.activeSubcategory = `${categoryValue}-${month}`;
+      emit('category-selected', categoryValue);
+    };
+
+    const selectSubcategory = (categoryValue, month) => {
+      activeSubcategory.value = `${categoryValue}-${month}`;
 
       // Emit event for parent components
-      this.$emit('subcategory-selected', {
+      emit('subcategory-selected', {
         category: categoryValue,
         month: month
       });
-    }
+    };
+
+    onMounted(() => {
+      loadCategories();
+    });
+
+    return {
+      categories,
+      categoriesLoading,
+      categoriesError,
+      expandedCategories,
+      activeCategory,
+      activeSubcategory,
+      toggleCategory,
+      selectSubcategory,
+      loadCategories
+    };
   }
 }
 </script>
@@ -78,6 +111,36 @@ export default {
   color: var(--text-secondary);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
+}
+
+.loading-categories, .error-categories {
+  padding: var(--spacing-md);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.mini-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(77, 166, 255, 0.2);
+  border-top: 2px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  min-height: 28px;
 }
 
 .category-menu {
@@ -114,6 +177,16 @@ export default {
   font-weight: 500;
 }
 
+.category-item.active {
+  background-color: rgba(77, 166, 255, 0.15);
+  border-left: 2px solid var(--accent-blue);
+}
+
+.category-item.active .category-name {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
 .subcategory-menu {
   list-style: none;
   margin-top: var(--spacing-xs);
@@ -132,16 +205,6 @@ export default {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.category-item.active {
-  background-color: rgba(77, 166, 255, 0.15);
-  border-left: 2px solid var(--accent-blue);
-}
-
-.category-item.active .category-name {
-  color: var(--accent-blue);
-  font-weight: 600;
 }
 
 .subcategory-item::before {

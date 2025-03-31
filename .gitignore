@@ -28,3 +28,4 @@ venv/
 tree.py
 tree.txt
 
+/dist/

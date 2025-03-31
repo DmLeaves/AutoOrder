@@ -28,8 +28,15 @@
           <td>{{ formatDate(order.startDate) }}</td>
           <td>{{ formatDate(order.endDate) }}</td>
           <td>{{ order.contact }}</td>
+<!--          <td>-->
+<!--            <span :class="getStatusClass(order.status)">{{ order.status }}</span>-->
+<!--          </td>-->
           <td>
-            <span :class="getStatusClass(order.status)">{{ order.status }}</span>
+            <QuickStatusUpdate
+                :order-id="order.id"
+                :status="order.status"
+                @status-updated="handleStatusUpdated"
+            />
           </td>
           <td class="remarks-cell">{{ order.remarks }}</td>
           <td>
@@ -59,14 +66,30 @@
       </svg>
       <p>没有找到匹配的订单</p>
     </div>
+
+    <!-- 编辑订单模态窗口 -->
+    <EditOrderModal
+        :visible="editModalVisible"
+        :order="orderToEdit"
+        @close="handleEditModalClose"
+        @order-updated="handleOrderUpdated"
+    />
   </div>
 </template>
 
 <script>
-import ordersData from '../mock/orders.json';
+import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useOrderStore } from '../store';
+import QuickStatusUpdate from './QuickStatusUpdate.vue';
+import EditOrderModal from './EditOrderModal.vue';
 
 export default {
   name: 'OrderList',
+  components: {
+    QuickStatusUpdate,
+    EditOrderModal
+  },
   props: {
     category: {
       type: String,
@@ -77,66 +100,111 @@ export default {
       default: null
     }
   },
-  data() {
-    return {
-      orders: ordersData.orders,
-      selectedOrder: null,
-      searchQuery: ''
-    };
-  },
-  computed: {
-    filteredOrders() {
-      let filtered = this.orders;
+  emits: ['order-selected', 'refresh-data'],
+  setup(props, { emit }) {
+    const orderStore = useOrderStore();
+    const { orders } = storeToRefs(orderStore);
+
+    const searchQuery = ref('');
+    const selectedOrder = ref(null);
+    const editModalVisible = ref(false);
+    const orderToEdit = ref(null);
+
+    const filteredOrders = computed(() => {
+      let filtered = orders.value;
 
       // Filter by category and month if provided
-      if (this.category) {
-        filtered = filtered.filter(order => order.category === this.category);
+      if (props.category) {
+        filtered = filtered.filter(order => order.category === props.category);
 
-        if (this.month) {
-          filtered = filtered.filter(order => order.month === this.month);
+        if (props.month) {
+          filtered = filtered.filter(order => order.month === props.month);
         }
       }
 
       // Apply search query filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
         filtered = filtered.filter(order =>
-            order.id.toLowerCase().includes(query) ||
-            order.contact.toLowerCase().includes(query) ||
-            order.remarks.toLowerCase().includes(query) ||
-            order.status.toLowerCase().includes(query)
+            (order.id && order.id.toLowerCase().includes(query)) ||
+            (order.contact && order.contact.toLowerCase().includes(query)) ||
+            (order.remarks && order.remarks.toLowerCase().includes(query)) ||
+            (order.status && order.status.toLowerCase().includes(query))
         );
       }
 
       return filtered;
-    }
-  },
-  methods: {
-    selectOrder(order) {
-      this.selectedOrder = order;
-      this.$emit('order-selected', order);
-    },
-    editOrder(order) {
-      // To be implemented
-      console.log('Edit order:', order.id);
-    },
-    openFolder(order) {
-      // In a real app, would open the associated folder
-      // using Electron's APIs
-      console.log('Open folder for order:', order.id);
-    },
-    formatDate(dateString) {
+    });
+
+    const selectOrder = (order) => {
+      selectedOrder.value = order;
+      emit('order-selected', order);
+    };
+
+    const editOrder = async (order) => {
+      orderToEdit.value = order;
+      editModalVisible.value = true;
+    };
+
+    const handleEditModalClose = () => {
+      editModalVisible.value = false;
+      orderToEdit.value = null;
+    };
+
+    const handleOrderUpdated = () => {
+      emit('refresh-data');
+    };
+
+    const handleStatusUpdated = (data) => {
+      emit('refresh-data');
+    };
+
+    const openFolder = (order) => {
+      // 打开关联文件夹
+      if (window.electron && window.electron.files) {
+        // 默认工作资源文件夹
+        const folderPath = 'D:\\收纳\\临时桌面\\工作资源文件\\' + order.id;
+        window.electron.files.openFolder(folderPath)
+            .then(result => {
+              if (!result.success) {
+                console.error('打开文件夹失败:', result.error);
+              }
+            });
+      }
+    };
+
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
       return new Date(dateString).toLocaleDateString('zh-CN');
-    },
-    getStatusClass(status) {
+    };
+
+    const getStatusClass = (status) => {
+      if (!status) return '';
+
       const statusMap = {
-        '进行中': 'status-badge status-in-progress',
-        '已完成': 'status-badge status-completed',
-        '异常': 'status-badge status-abnormal'
+        'in-progress': 'status-badge status-in-progress',
+        'completed': 'status-badge status-completed',
+        'abnormal': 'status-badge status-abnormal'
       };
 
       return statusMap[status] || '';
-    }
+    };
+
+    return {
+      filteredOrders,
+      searchQuery,
+      selectedOrder,
+      editModalVisible,
+      orderToEdit,
+      selectOrder,
+      editOrder,
+      openFolder,
+      formatDate,
+      getStatusClass,
+      handleEditModalClose,
+      handleOrderUpdated,
+      handleStatusUpdated
+    };
   }
 }
 </script>

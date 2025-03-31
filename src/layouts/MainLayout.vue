@@ -17,7 +17,7 @@
     <!-- Main content -->
     <main class="main-content">
       <div class="top-actions">
-        <button class="btn btn-primary add-order-btn">
+        <button class="btn btn-primary add-order-btn" @click="showAddOrderModal">
           <span>添加订单</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -29,6 +29,13 @@
       <div class="content-area">
         <slot></slot>
       </div>
+
+      <!-- 添加订单模态窗口 -->
+      <AddOrderModal
+          :visible="addOrderModalVisible"
+          @close="addOrderModalVisible = false"
+          @order-added="handleOrderAdded"
+      />
     </main>
 
     <!-- Right sidebar / Action panel -->
@@ -36,20 +43,67 @@
       <div class="action-buttons">
         <button class="btn btn-secondary action-btn">统计信息</button>
         <button class="btn btn-secondary action-btn">后台管理</button>
-        <button class="btn btn-secondary action-btn">资源文件</button>
-        <button class="btn btn-secondary action-btn">项目文件</button>
+        <button class="btn btn-secondary action-btn" @click="openResourceFolder">资源文件</button>
+        <button class="btn btn-secondary action-btn" @click="openProjectFolder">项目文件</button>
       </div>
     </aside>
   </div>
 </template>
 
 <script>
+import { ref } from 'vue';
 import OrderCategory from '../components/OrderCategory.vue';
+import AddOrderModal from '../components/AddOrderModal.vue';
 
 export default {
   name: 'MainLayout',
   components: {
-    OrderCategory
+    OrderCategory,
+    AddOrderModal
+  },
+  emits: ['category-selected', 'subcategory-selected', 'refresh-data'],
+  setup(props, { emit }) {
+    const addOrderModalVisible = ref(false);
+
+    const showAddOrderModal = () => {
+      console.log('显示添加订单模态窗口');
+      addOrderModalVisible.value = true;
+    };
+
+    const handleOrderAdded = () => {
+      // 通知父组件刷新数据
+      emit('refresh-data');
+    };
+
+    const openResourceFolder = () => {
+      if (window.electron && window.electron.files) {
+        window.electron.files.openFolder('D:\\收纳\\临时桌面\\工作资源文件')
+            .then(result => {
+              if (!result.success) {
+                console.error('打开资源文件夹失败:', result.error);
+              }
+            });
+      }
+    };
+
+    const openProjectFolder = () => {
+      if (window.electron && window.electron.files) {
+        window.electron.files.openFolder('D:\\project')
+            .then(result => {
+              if (!result.success) {
+                console.error('打开项目文件夹失败:', result.error);
+              }
+            });
+      }
+    };
+
+    return {
+      addOrderModalVisible,
+      showAddOrderModal,
+      handleOrderAdded,
+      openResourceFolder,
+      openProjectFolder
+    };
   }
 }
 </script>
@@ -96,6 +150,7 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: var(--spacing-lg);
 }
 
 .top-actions {
@@ -115,10 +170,13 @@ export default {
   flex: 1;
   padding: var(--spacing-md);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .action-panel {
   width: 150px;
+  min-width: 150px;
   background-color: var(--secondary-bg);
   border-left: 1px solid var(--border-color);
   padding: var(--spacing-md);

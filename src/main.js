@@ -4,9 +4,12 @@ import router from './router';
 import App from './App.vue';
 import './assets/styles/theme.css';
 
-const app = createApp(App);
-const pinia = createPinia();
+import { setActivePinia } from 'pinia';
 
+const pinia = createPinia();
+setActivePinia(pinia);
+
+const app = createApp(App);
 app.use(pinia);
 app.use(router);
 app.mount('#app');
