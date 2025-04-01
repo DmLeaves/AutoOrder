@@ -82,9 +82,16 @@ function createWindow() {
     // 自定义文件操作
     ipcMain.handle('open-folder', async (event, folderPath) => {
         try {
+            // 检查文件夹是否存在，不存在则创建
+            if (!fs.existsSync(folderPath)) {
+                fs.mkdirSync(folderPath, { recursive: true });
+                console.log(`创建文件夹: ${folderPath}`);
+            }
+
             require('child_process').exec(`start "" "${folderPath}"`);
             return { success: true };
         } catch (error) {
+            console.error('打开文件夹失败:', error);
             return { success: false, error: error.message };
         }
     });

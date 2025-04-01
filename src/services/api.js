@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建一个axios实例
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080',
+    baseURL: process.env.NODE_ENV === 'production' ? 'http://localhost:6020' : 'http://localhost:6020',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'

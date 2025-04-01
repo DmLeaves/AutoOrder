@@ -203,6 +203,13 @@ h6 {
     border: 1px solid var(--status-error);
 }
 
+
+.status-paid {
+    background-color: rgba(156, 39, 176, 0.2);
+    color: #9c27b0;
+    border: 1px solid #9c27b0;
+}
+
 /* Form Elements */
 .form-group {
     margin-bottom: var(--spacing-md);
@@ -423,3 +430,13 @@ tr:hover {
     margin-bottom: var(--spacing-md);
     opacity: 0.7;
 }
+
+/* Status Indicators */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+}
+

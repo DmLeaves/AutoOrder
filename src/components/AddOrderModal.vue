@@ -94,7 +94,11 @@
                   v-model="formData.contact"
                   :class="{ 'invalid': validationErrors.contact }"
                   placeholder="例如: 张三"
+                  list="contact-list"
               >
+              <datalist id="contact-list">
+                <option v-for="contact in contacts" :key="contact.id" :value="contact.name"></option>
+              </datalist>
               <div v-if="validationErrors.contact" class="error-message">{{ validationErrors.contact }}</div>
             </div>
 
@@ -109,6 +113,7 @@
                 <option value="进行中">进行中</option>
                 <option value="已完成">已完成</option>
                 <option value="异常">异常</option>
+                <option value="已收款">已收款</option>
               </select>
               <div v-if="validationErrors.status" class="error-message">{{ validationErrors.status }}</div>
             </div>
@@ -141,8 +146,9 @@
 </template>
 
 <script>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useOrderStore } from '../store';
+import { analyzeOrderText } from '../utils/orderTextAnalyzer';
 
 export default {
   name: 'AddOrderModal',
@@ -157,26 +163,67 @@ export default {
     const orderStore = useOrderStore();
     const isSubmitting = ref(false);
     const analyzeText = ref('');
+    const contacts = ref([]);
 
-    // 表单数据
-    const formData = reactive({
+    // 获取联系人列表
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('/api/contacts');
+        const data = await response.json();
+        contacts.value = data;
+      } catch (error) {
+        console.error('获取联系人失败:', error);
+      }
+    };
+
+    // 从联系人数据中提取名称列表
+    const contactNames = computed(() => {
+      return contacts.value.map(contact => contact.name);
+    });
+
+    // 默认日期值
+    const today = new Date().toISOString().split('T')[0];
+
+    // 表单数据初始状态
+    const defaultFormData = {
       id: '',
       fee: null,
-      startDate: new Date().toISOString().split('T')[0], // 默认为今天
+      startDate: today,
       endDate: '',
       contact: '',
       status: '进行中',
       remarks: ''
-    });
+    };
 
-    // 验证错误
+    // 表单数据
+    const formData = reactive({...defaultFormData});
+
+    // 验证错误 - 正确初始化为空字符串
     const validationErrors = reactive({
       id: '',
       fee: '',
       startDate: '',
       endDate: '',
       contact: '',
-      status: ''
+      status: '',
+      remarks: ''
+    });
+
+    // 监听visible属性，当模态框打开时重置表单和获取联系人
+    watch(() => props.visible, (isVisible) => {
+      if (isVisible) {
+        // 重新设置默认值
+        formData.startDate = new Date().toISOString().split('T')[0]; // 更新当天日期
+        formData.status = '进行中';
+
+        // 获取联系人
+        fetchContacts();
+      }
+    });
+
+    // 组件挂载时获取联系人
+    onMounted(() => {
+      fetchContacts();
     });
 
     // 验证表单
@@ -188,6 +235,14 @@ export default {
         validationErrors[key] = '';
       });
 
+      // 验证订单ID
+      if (!formData.id) {
+        validationErrors.id = '请输入订单编号';
+        isValid = false;
+      } else if (!/^Q\d+$/.test(formData.id)) {
+        validationErrors.id = '订单编号格式应为"Q+数字"';
+        isValid = false;
+      }
 
       // 验证费用
       if (formData.fee === null || formData.fee === '') {
@@ -235,12 +290,12 @@ export default {
       isSubmitting.value = true;
 
       try {
-
-        // 确定分类值
+        // 确定分类值和状态映射
         const statusCategoryMap = {
           '进行中': 'in-progress',
           '已完成': 'completed',
-          '异常': 'abnormal'
+          '异常': 'abnormal',
+          '已收款': 'paid'
         };
 
         const category = statusCategoryMap[formData.status] || 'in-progress';
@@ -256,21 +311,32 @@ export default {
           startDate: formData.startDate,
           endDate: formData.endDate,
           contact: formData.contact,
-          status: statusCategoryMap[formData.status],
+          status: statusCategoryMap[formData.status], // 将status映射为英文
           remarks: formData.remarks,
           category, // 保持一致
           month
         };
+
         await orderStore.createOrder(orderData);
 
-        // 重置表单
+        // 重置表单 - 但保留开始日期和状态的默认值
+        const preservedDefaults = {
+          startDate: new Date().toISOString().split('T')[0], // 更新当天日期
+          status: '进行中'
+        };
+
+        // 重置其他字段
         Object.keys(formData).forEach(key => {
-          if (key === 'fee') {
+          if (key in preservedDefaults) {
+            formData[key] = preservedDefaults[key];
+          } else if (key === 'fee') {
             formData[key] = null;
           } else {
             formData[key] = '';
           }
         });
+
+        analyzeText.value = '';
 
         emit('order-added');
         emit('close');
@@ -281,18 +347,34 @@ export default {
       }
     };
 
-    // 分析文本内容 (预留功能)
+    // 分析文本内容
     const analyzeTextContent = () => {
-      // 此处为将来的文本分析功能预留
-      console.log('分析文本:', analyzeText.value);
-      // 仅作为演示，可在未来实现真正的文本分析
-      if (analyzeText.value.includes('Q')) {
-        const idMatch = analyzeText.value.match(/Q\d+/);
-        if (idMatch) formData.id = idMatch[0];
+      if (!analyzeText.value.trim()) {
+        alert('请输入要分析的文本内容');
+        return;
       }
 
-      // 提示用户
-      alert('文本分析功能正在开发中');
+      try {
+        // 调用文本分析函数，仅传入联系人名称列表
+        const result = analyzeOrderText(analyzeText.value, contactNames.value);
+
+        if (result) {
+          // 更新表单数据
+          Object.keys(result).forEach(key => {
+            if (result[key] !== null && result[key] !== '') {
+              formData[key] = result[key];
+            }
+          });
+
+          // 提示用户分析结果
+          console.log('分析结果:', result);
+        } else {
+          alert('无法解析文本内容，请检查格式或手动填写');
+        }
+      } catch (error) {
+        console.error('文本分析错误:', error);
+        alert('分析过程中出现错误，请手动填写');
+      }
     };
 
     // 关闭模态窗口
@@ -312,6 +394,7 @@ export default {
       validationErrors,
       isSubmitting,
       analyzeText,
+      contacts,
       submitForm,
       analyzeTextContent,
       close,
