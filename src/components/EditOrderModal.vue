@@ -87,6 +87,7 @@
                 <option value="进行中">进行中</option>
                 <option value="已完成">已完成</option>
                 <option value="异常">异常</option>
+                <option value="已收款">已收款</option>
               </select>
               <div v-if="validationErrors.status" class="error-message">{{ validationErrors.status }}</div>
             </div>
@@ -143,14 +144,16 @@ export default {
     const statusEnToZh = {
       'in-progress': '进行中',
       'completed': '已完成',
-      'abnormal': '异常'
+      'abnormal': '异常',
+      'paid': '已收款'
     };
 
     // 状态映射 - 从中文到英文
     const statusZhToEn = {
       '进行中': 'in-progress',
       '已完成': 'completed',
-      '异常': 'abnormal'
+      '异常': 'abnormal',
+      '已收款': 'paid'
     };
 
     // 表单数据

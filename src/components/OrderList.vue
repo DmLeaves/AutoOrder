@@ -113,6 +113,11 @@ export default {
     const filteredOrders = computed(() => {
       let filtered = orders.value;
 
+      // 首先过滤掉"已收款"状态的订单，除非明确要查看已收款订单
+      if (props.category !== 'paid') {
+        filtered = filtered.filter(order => order.status !== 'paid');
+      }
+
       // Filter by category and month if provided
       if (props.category) {
         filtered = filtered.filter(order => order.category === props.category);

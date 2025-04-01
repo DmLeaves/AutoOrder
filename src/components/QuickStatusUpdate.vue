@@ -47,17 +47,20 @@ export default {
       'in-progress': 'in-progress',
       'completed': 'completed',
       'abnormal': 'abnormal',
+      'paid': 'paid',
       // 中文到英文的映射
       '进行中': 'in-progress',
       '已完成': 'completed',
-      '异常': 'abnormal'
+      '异常': 'abnormal',
+      '已收款': 'paid'
     };
 
     // 状态选项
     const statusOptions = [
       { value: 'in-progress', label: '进行中', class: 'in-progress' },
       { value: 'completed', label: '已完成', class: 'completed' },
-      { value: 'abnormal', label: '异常', class: 'abnormal' }
+      { value: 'abnormal', label: '异常', class: 'abnormal' },
+      { value: 'paid', label: '已收款', class: 'paid' }
     ];
 
     // 初始化并且监听status变化
