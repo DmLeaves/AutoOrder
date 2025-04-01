@@ -235,12 +235,9 @@ export default {
         validationErrors[key] = '';
       });
 
-      // 验证订单ID
+      // 验证订单ID 字母+数字
       if (!formData.id) {
         validationErrors.id = '请输入订单编号';
-        isValid = false;
-      } else if (!/^Q\d+$/.test(formData.id)) {
-        validationErrors.id = '订单编号格式应为"Q+数字"';
         isValid = false;
       }
 
