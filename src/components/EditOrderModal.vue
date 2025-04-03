@@ -177,7 +177,6 @@ export default {
       status: ''
     });
 
-    // 监听order变化，更新表单数据
     watch(() => props.order, (newOrder) => {
       if (newOrder && Object.keys(newOrder).length > 0) {
         formData.id = newOrder.id || '';
@@ -185,8 +184,7 @@ export default {
         formData.startDate = newOrder.startDate || '';
         formData.endDate = newOrder.endDate || '';
         formData.contact = newOrder.contact || '';
-        // 将英文状态转换为中文状态用于显示
-        formData.status = statusEnToZh[newOrder.status] || '';
+        formData.status = newOrder.status || '';
         formData.remarks = newOrder.remarks || '';
       }
     }, { immediate: true });
