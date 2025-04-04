@@ -165,9 +165,27 @@ export const userOrderAPI = {
     }
 };
 
+export const statisticsAPI = {
+    // 获取仪表盘统计数据
+    getDashboardStats: () => {
+        return api.get('/api/dashboard/stats');
+    },
+
+    // 获取指定年月的订单数据
+    getMonthlyOrders: (year, month) => {
+        return api.get(`/api/statistics/orders/year/${year}/month/${month}`);
+    },
+
+    // 获取所有已完成的订单
+    getCompletedOrders: () => {
+        return api.get('/api/statistics/orders/completed');
+    }
+};
+
 export default {
     order: orderAPI,
     user: userAPI,
     contact: contactAPI,
-    userOrder: userOrderAPI
+    userOrder: userOrderAPI,
+    statistics: statisticsAPI
 };

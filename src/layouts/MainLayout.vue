@@ -41,7 +41,7 @@
     <!-- Right sidebar / Action panel -->
     <aside class="action-panel">
       <div class="action-buttons">
-        <button class="btn btn-secondary action-btn">统计信息</button>
+        <button class="btn btn-secondary action-btn" @click="navigateToStatistics">统计信息</button>
         <button class="btn btn-secondary action-btn">后台管理</button>
         <button class="btn btn-secondary action-btn" @click="openResourceFolder">资源文件</button>
         <button class="btn btn-secondary action-btn" @click="openProjectFolder">项目文件</button>
@@ -54,6 +54,7 @@
 import { ref } from 'vue';
 import OrderCategory from '../components/OrderCategory.vue';
 import AddOrderModal from '../components/AddOrderModal.vue';
+import router from "@/router";
 
 export default {
   name: 'MainLayout',
@@ -97,12 +98,17 @@ export default {
       }
     };
 
+    const navigateToStatistics = () => {
+      router.push('/statistics');
+    };
+
     return {
       addOrderModalVisible,
       showAddOrderModal,
       handleOrderAdded,
       openResourceFolder,
-      openProjectFolder
+      openProjectFolder,
+      navigateToStatistics
     };
   }
 }
