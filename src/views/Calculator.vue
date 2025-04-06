@@ -23,7 +23,15 @@
             <h3>筛选结果</h3>
             <div class="filter-pills">
               <div class="filter-pill">{{ selectedMonth || '全部月份' }}</div>
-              <div class="filter-pill">{{ getStatusLabel(selectedStatus) }}</div>
+              <div class="filter-pill" v-if="isAllStatusesSelected">全部状态</div>
+              <div
+                  v-else
+                  v-for="status in selectedStatuses"
+                  :key="status"
+                  class="filter-pill"
+              >
+                {{ getStatusLabel(status) }}
+              </div>
             </div>
           </div>
           <div class="result-body">
@@ -68,19 +76,19 @@
 
         <!-- 状态筛选 -->
         <div class="filter-section">
-          <h3 class="section-title">状态筛选</h3>
+          <h3 class="section-title">状态筛选 <span class="hint">(可多选)</span></h3>
           <div class="filter-cards">
             <div
                 v-for="status in availableStatuses"
                 :key="status"
-                :class="['filter-card', { active: selectedStatus === status }, `status-${status}`]"
+                :class="['filter-card', { active: isStatusSelected(status) }, `status-${status}`]"
                 @click="toggleStatusFilter(status)"
             >
               {{ getStatusLabel(status) }}
             </div>
             <div
-                :class="['filter-card', { active: selectedStatus === null }]"
-                @click="toggleStatusFilter(null)"
+                :class="['filter-card', { active: isAllStatusesSelected }]"
+                @click="toggleAllStatuses()"
             >
               全部状态
             </div>
@@ -142,7 +150,7 @@ export default {
 
     // 筛选条件
     const selectedMonth = ref(null);
-    const selectedStatus = ref('completed');
+    const selectedStatuses = ref([]);
 
     // 状态标签映射
     const statusLabels = {
@@ -151,6 +159,16 @@ export default {
       'abnormal': '异常',
       'paid': '已支付'
     };
+
+    // 判断状态是否被选中
+    const isStatusSelected = (status) => {
+      return selectedStatuses.value.includes(status);
+    };
+
+    // 判断是否选择了"全部状态"
+    const isAllStatusesSelected = computed(() => {
+      return selectedStatuses.value.length === 0;
+    });
 
     // 获取订单数据（最近三个月）
     const fetchOrderData = async () => {
@@ -198,13 +216,18 @@ export default {
 
         orderData.value = allOrders;
 
-        // 设置默认选中当前月份
+        // 设置默认选中当前月份和已完成状态
         if (allOrders.length > 0) {
           const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
           if (availableMonths.value.includes(currentMonth)) {
             selectedMonth.value = currentMonth;
           } else {
             selectedMonth.value = availableMonths.value[0]; // 默认选第一个月
+          }
+
+          // 默认选中已完成状态
+          if (availableStatuses.value.includes('completed')) {
+            selectedStatuses.value = ['completed'];
           }
         }
       } catch (err) {
@@ -264,8 +287,8 @@ export default {
 
         // 状态筛选
         let statusMatch = true;
-        if (selectedStatus.value) {
-          statusMatch = order.status === selectedStatus.value;
+        if (selectedStatuses.value.length > 0) {
+          statusMatch = selectedStatuses.value.includes(order.status);
         }
 
         return monthMatch && statusMatch;
@@ -340,9 +363,24 @@ export default {
       selectedMonth.value = month;
     };
 
-    // 切换状态筛选
+    // 切换状态筛选（多选）
     const toggleStatusFilter = (status) => {
-      selectedStatus.value = status;
+      // 如果是已经选中的状态，则取消选中
+      if (selectedStatuses.value.includes(status)) {
+        selectedStatuses.value = selectedStatuses.value.filter(s => s !== status);
+      } else {
+        // 如果是新状态，则添加到选中列表
+        selectedStatuses.value.push(status);
+      }
+    };
+
+    // 切换全部状态
+    const toggleAllStatuses = () => {
+      // 如果当前已经是全部状态（即空数组），则不做任何操作
+      // 否则清空选中状态，恢复到全部状态
+      if (selectedStatuses.value.length > 0) {
+        selectedStatuses.value = [];
+      }
     };
 
     // 打印调试信息
@@ -366,7 +404,9 @@ export default {
       error,
       orderData,
       selectedMonth,
-      selectedStatus,
+      selectedStatuses,
+      isStatusSelected,
+      isAllStatusesSelected,
       availableMonths,
       availableStatuses,
       filteredOrders,
@@ -378,6 +418,7 @@ export default {
       getStatusLabel,
       toggleMonthFilter,
       toggleStatusFilter,
+      toggleAllStatuses,
       fetchOrderData
     };
   }
@@ -506,6 +547,13 @@ export default {
   font-weight: 500;
 }
 
+.hint {
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--accent-cyan);
+  opacity: 0.8;
+}
+
 .filter-cards {
   display: flex;
   flex-wrap: wrap;
@@ -519,6 +567,7 @@ export default {
   cursor: pointer;
   transition: all var(--transition-normal);
   border: 1px solid var(--border-color);
+  position: relative;
 }
 
 .filter-card:hover {
