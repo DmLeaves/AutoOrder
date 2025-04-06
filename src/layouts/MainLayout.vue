@@ -17,13 +17,24 @@
     <!-- Main content -->
     <main class="main-content">
       <div class="top-actions">
-        <button class="btn btn-primary add-order-btn" @click="showAddOrderModal">
-          <span>添加订单</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
+        <div class="top-actions-left">
+          <button class="btn btn-secondary settings-btn" @click="showSettings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </button>
+        </div>
+        <div class="top-actions-right">
+          <button class="btn btn-primary add-order-btn" @click="showAddOrderModal">
+            <span>添加订单</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="content-area">
@@ -36,35 +47,61 @@
           @close="addOrderModalVisible = false"
           @order-added="handleOrderAdded"
       />
+
+      <!-- 设置模态窗口 -->
+      <SettingsModal
+          :visible="settingsModalVisible"
+          @close="settingsModalVisible = false"
+          @buttons-updated="handleButtonsUpdated"
+      />
     </main>
 
     <!-- Right sidebar / Action panel -->
     <aside class="action-panel">
       <div class="action-buttons">
+        <!-- 固定按钮 -->
         <button class="btn btn-secondary action-btn" @click="navigateToStatistics">统计信息</button>
         <button class="btn btn-secondary action-btn">后台管理</button>
-        <button class="btn btn-secondary action-btn" @click="openResourceFolder">资源文件</button>
-        <button class="btn btn-secondary action-btn" @click="openProjectFolder">项目文件</button>
+
+        <!-- 自定义按钮 -->
+        <button
+            v-for="button in customButtons"
+            :key="button.id"
+            class="btn btn-secondary action-btn"
+            @click="openCustomFolder(button.path)"
+        >
+          {{ button.name }}
+        </button>
       </div>
     </aside>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import OrderCategory from '../components/OrderCategory.vue';
 import AddOrderModal from '../components/AddOrderModal.vue';
+import SettingsModal from '../components/SettingsModal.vue';
 import router from "@/router";
+import localStorageService from '../services/localStorageService';
 
 export default {
   name: 'MainLayout',
   components: {
     OrderCategory,
-    AddOrderModal
+    AddOrderModal,
+    SettingsModal
   },
   emits: ['category-selected', 'subcategory-selected', 'refresh-data'],
   setup(props, { emit }) {
     const addOrderModalVisible = ref(false);
+    const settingsModalVisible = ref(false);
+    const customButtons = ref([]);
+
+    // 加载自定义按钮
+    const loadCustomButtons = () => {
+      customButtons.value = localStorageService.getCustomButtons();
+    };
 
     const showAddOrderModal = () => {
       console.log('显示添加订单模态窗口');
@@ -76,23 +113,23 @@ export default {
       emit('refresh-data');
     };
 
-    const openResourceFolder = () => {
-      if (window.electron && window.electron.files) {
-        window.electron.files.openFolder('D:\\收纳\\临时桌面\\工作资源文件')
-            .then(result => {
-              if (!result.success) {
-                console.error('打开资源文件夹失败:', result.error);
-              }
-            });
-      }
+    // 显示设置模态窗口
+    const showSettings = () => {
+      settingsModalVisible.value = true;
     };
 
-    const openProjectFolder = () => {
+    // 处理按钮更新
+    const handleButtonsUpdated = (updatedButtons) => {
+      customButtons.value = updatedButtons;
+    };
+
+    // 打开自定义文件夹
+    const openCustomFolder = (folderPath) => {
       if (window.electron && window.electron.files) {
-        window.electron.files.openFolder('D:\\project')
+        window.electron.files.openFolder(folderPath)
             .then(result => {
               if (!result.success) {
-                console.error('打开项目文件夹失败:', result.error);
+                console.error('打开文件夹失败:', result.error);
               }
             });
       }
@@ -102,12 +139,20 @@ export default {
       router.push('/statistics');
     };
 
+    onMounted(() => {
+      // 初始化时加载自定义按钮
+      loadCustomButtons();
+    });
+
     return {
       addOrderModalVisible,
+      settingsModalVisible,
+      customButtons,
       showAddOrderModal,
       handleOrderAdded,
-      openResourceFolder,
-      openProjectFolder,
+      showSettings,
+      handleButtonsUpdated,
+      openCustomFolder,
       navigateToStatistics
     };
   }
@@ -162,8 +207,20 @@ export default {
 .top-actions {
   padding: var(--spacing-md);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid var(--border-color);
+}
+
+.top-actions-left, .top-actions-right {
+  display: flex;
+  align-items: center;
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .add-order-btn {

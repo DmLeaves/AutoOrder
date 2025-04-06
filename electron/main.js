@@ -96,6 +96,24 @@ function createWindow() {
         }
     });
 
+    ipcMain.handle('select-folder', async () => {
+        try {
+            const { dialog } = require('electron');
+            const result = await dialog.showOpenDialog(mainWindow, {
+                properties: ['openDirectory']
+            });
+
+            if (!result.canceled && result.filePaths.length > 0) {
+                return { success: true, path: result.filePaths[0] };
+            } else {
+                return { success: false, path: null };
+            }
+        } catch (error) {
+            console.error('选择文件夹失败:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     mainWindow.on('closed', () => {
         mainWindow = null;
     });

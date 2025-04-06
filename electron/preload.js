@@ -10,7 +10,8 @@ contextBridge.exposeInMainWorld(
             close: () => ipcRenderer.send('close-window')
         },
         files: {
-            openFolder: (path) => ipcRenderer.invoke('open-folder', path)
+            openFolder: (path) => ipcRenderer.invoke('open-folder', path),
+            selectFolder: () => ipcRenderer.invoke('select-folder')
         }
     }
 );

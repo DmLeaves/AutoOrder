@@ -14,14 +14,15 @@
             <li
                 v-for="item in menuItems"
                 :key="item.id"
-                :class="['stats-menu-item', { active: isActiveRoute(item.route) }]"
-                @click="navigateTo(item.route)"
+                :class="['stats-menu-item', { active: isActiveRoute(item.route), 'menu-disabled': !item.implemented }]"
+                @click="navigateToMenu(item)"
             >
               <div class="menu-item-content">
                 <span class="menu-icon">
                   <component :is="item.icon" />
                 </span>
                 <span class="menu-label">{{ item.label }}</span>
+                <span v-if="!item.implemented" class="development-badge">开发中</span>
               </div>
             </li>
           </ul>
@@ -45,11 +46,21 @@
         <slot></slot>
       </div>
     </main>
+
+    <!-- 功能开发中提示 -->
+    <div v-if="showDevToast" class="dev-toast">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>该功能正在开发中，敬请期待！</span>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, h, computed } from 'vue';
+import { ref, h } from 'vue';
 import router from "@/router";
 import { useRoute } from 'vue-router';
 
@@ -57,6 +68,7 @@ export default {
   name: 'StatisticsLayout',
   setup() {
     const route = useRoute();
+    const showDevToast = ref(false);
 
     // 图标组件创建函数
     const createIcon = (d) => {
@@ -78,37 +90,43 @@ export default {
         id: 'dashboard',
         label: '仪表盘',
         icon: createIcon('M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'),
-        route: '/statistics'
+        route: '/statistics',
+        implemented: true
       },
       {
         id: 'income',
         label: '收入分析',
         icon: createIcon('M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'),
-        route: '/income-analysis'  // 预留路由，暂未实现
+        route: '/income-analysis',
+        implemented: false
       },
       {
         id: 'orders',
         label: '订单分析',
         icon: createIcon('M22 12h-4l-3 9L9 3l-3 9H2'),
-        route: '/order-analysis'  // 预留路由，暂未实现
+        route: '/order-analysis',
+        implemented: false
       },
       {
         id: 'anomalies',
         label: '异常分析',
         icon: createIcon('M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'),
-        route: '/anomaly-analysis'  // 预留路由，暂未实现
+        route: '/anomaly-analysis',
+        implemented: false
       },
       {
         id: 'calculator',
         label: '快捷计算',
         icon: createIcon('M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5z'),
-        route: '/calculator'
+        route: '/calculator',
+        implemented: true
       },
       {
         id: 'export',
         label: '快捷导出',
         icon: createIcon('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3'),
-        route: '/export'
+        route: '/export',
+        implemented: true
       }
     ];
 
@@ -117,10 +135,19 @@ export default {
       return route.path === routePath;
     };
 
-    // 导航到指定路由
-    const navigateTo = (routePath) => {
-      if (route.path !== routePath) {
-        router.push(routePath);
+    // 导航到指定菜单
+    const navigateToMenu = (item) => {
+      if (!item.implemented) {
+        // 显示开发中提示
+        showDevToast.value = true;
+        setTimeout(() => {
+          showDevToast.value = false;
+        }, 3000);
+        return;
+      }
+
+      if (route.path !== item.route) {
+        router.push(item.route);
       }
     };
 
@@ -132,8 +159,9 @@ export default {
     return {
       menuItems,
       isActiveRoute,
-      navigateTo,
-      goBack
+      navigateToMenu,
+      goBack,
+      showDevToast
     };
   }
 }
@@ -145,6 +173,7 @@ export default {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
 }
 
 .sidebar {
@@ -191,7 +220,7 @@ export default {
   border-left: 3px solid transparent;
 }
 
-.stats-menu-item:hover {
+.stats-menu-item:hover:not(.menu-disabled) {
   background-color: rgba(77, 166, 255, 0.08);
 }
 
@@ -203,6 +232,7 @@ export default {
 .menu-item-content {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .menu-icon {
@@ -223,6 +253,26 @@ export default {
 
 .active .menu-label {
   color: var(--accent-blue);
+}
+
+/* 菜单禁用样式 */
+.menu-disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.menu-disabled:hover {
+  background-color: transparent;
+}
+
+.development-badge {
+  background-color: var(--status-warning);
+  color: var(--primary-bg);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: var(--spacing-sm);
+  font-weight: bold;
 }
 
 .main-content {
@@ -253,5 +303,49 @@ export default {
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
+}
+
+/* 开发中提示 */
+.dev-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--tertiary-bg);
+  border: 1px solid var(--status-warning);
+  border-radius: var(--border-radius-md);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-primary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s forwards;
+}
+
+.dev-toast svg {
+  color: var(--status-warning);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 </style>
